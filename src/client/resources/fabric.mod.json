@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"id": "sagiliths-pve-utils-private",
+	"version": "${version}",
+	"name": "Sagilith's PvE utils (Private)",
+	"description": "Necessary PvE utils for fair adventage over others",
+	"authors": [
+		"Sagilith"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/sagiliths-pve-utils-private/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"client": [
+			{
+				"value": "com.github.SagilithsPvEUtilsPrivateClient",
+				"adapter": "kotlin"
+			}
+		]
+	},
+	"mixins": [
+		{
+			"config": "sagiliths-pve-utils-private.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.16.14",
+		"minecraft": "~1.21",
+		"java": ">=17",
+		"fabric-api": "*",
+		"fabric-language-kotlin": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
