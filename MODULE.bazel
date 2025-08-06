@@ -1,0 +1,50 @@
+"Credits to fabazel"
+
+module(
+    name = "milkshake",
+    version = "0.0.1",
+)
+
+bazel_dep(name = "rules_java", version = "8.12.0")
+bazel_dep(name = "rules_kotlin", version = "2.1.0")
+bazel_dep(name = "rules_jvm_external", version = "6.7")
+
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_file(
+    name = "fabric",
+    urls = ["https://modmaven.dev/net/fabricmc/fabric-api/fabric-api/0.102.0+1.21/fabric-api-0.102.0+1.21.jar"],
+    sha256 = "7ec0e5a11e77957fe1ed0328487921a8211bb7eace14298cd74635bec61a3f26"
+)
+
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    artifacts = [
+        "org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.0",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0",
+        "org.jetbrains:annotations:26.0.2",
+        "net.fabricmc:fabric-loader:0.16.14",
+        "net.fabricmc:intermediary:1.21:v2",
+        "net.fabricmc:yarn:1.21+build.9:v2",
+        "net.fabricmc:tiny-remapper:0.11.0",
+        "net.fabricmc:mapping-io:0.7.1",
+        "net.fabricmc.fabric-api:fabric-api:0.102.0+1.21",
+        "net.fabricmc:fabric-language-kotlin:1.13.4+kotlin.2.2.0",
+        "net.fabricmc:sponge-mixin:0.15.4+mixin.0.8.7",
+    ],
+    repositories = [
+        "https://maven.fabricmc.net/",
+        "https://modmaven.dev/",
+        "https://repo1.maven.org/maven2",
+    ],
+    lock_file = "//:maven_install.json",
+)
+use_repo(maven, "maven")
+
+minecraft = use_extension("//repo:minecraft_jar.bzl", "minecraft")
+minecraft.minecraft_jar(
+    version = "1.21",
+    type = "client",
+    mapping = False,
+)
+use_repo(minecraft, "minecraft")

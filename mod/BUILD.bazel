@@ -1,0 +1,111 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//rule:extract_jar.bzl", "extract_jar")
+load("//rule:merge_mapping.bzl", "merge_mapping", "merge_mapping_input")
+load("//rule:remap_jar.bzl", "remap_jar")
+
+extract_jar(
+    name = "intermediary_mapping",
+    entry_path = "mappings/mappings.tiny",
+    filename = "intermediary.tiny",
+    input = "@maven//:net_fabricmc_intermediary_v2_1_21",
+)
+
+extract_jar(
+    name = "yarn_mapping",
+    entry_path = "mappings/mappings.tiny",
+    filename = "yarn.tiny",
+    input = "@maven//:net_fabricmc_yarn_v2_1_21_build_9",
+)
+
+merge_mapping_input(
+    name = "yarn_input",
+    file = ":yarn_mapping",
+    format = "tinyv2",
+)
+
+merge_mapping_input(
+    name = "intermediary_input",
+    file = ":intermediary_mapping",
+    format = "tinyv2",
+    source_namespace = "intermediary",
+)
+
+merge_mapping(
+    name = "merged_mapping",
+    complete_namespace = {
+        "named": "official",
+        "intermediary": "official",
+    },
+    inputs = [
+        ":yarn_input",
+        ":intermediary_input",
+    ],
+    output = "merged.tiny",
+    output_source_namespace = "official",
+)
+
+remap_jar(
+    name = "remapped_client_named",
+    from_namespace = "official",
+    inputs = ["@minecraft//:1.21_client"],
+    mapping = ":merged_mapping",
+    to_namespace = "named",
+)
+
+remap_jar(
+    name = "remapped_client_intermediary",
+    from_namespace = "official",
+    inputs = ["@minecraft//:1.21_client"],
+    mapping = ":intermediary_mapping",
+    to_namespace = "intermediary",
+)
+
+remap_jar(
+    name = "remapped_deps",
+    classpath = [
+        ":remapped_client_intermediary",
+    ],
+    from_namespace = "intermediary",
+    inputs = [
+        "@maven//:net_fabricmc_fabric_api_fabric_api_0_102_0_1_21",
+        "@maven//:net_fabricmc_fabric_language_kotlin_1_13_4_kotlin_2_2_0",
+        "@maven//:net_fabricmc_fabric_loader_0_16_14",
+        "@maven//:net_fabricmc_sponge_mixin",
+    ],
+    mapping = ":yarn_mapping",
+    remap_transitive_deps = True,
+    to_namespace = "named",
+)
+
+kt_jvm_library(
+    name = "mod_unmapped",
+    srcs = glob([
+        "src/client/kotlin/**/*.kt",
+    ]),
+    resources = [
+        "src/client/resources/fabric.mod.json",
+        "src/client/resources/sagiliths-pve-utils-private.mixins.json",
+        "src/client/resources/sagiliths-pve-utils-private.client.mixins.json"
+    ],
+    resource_strip_prefix = "mod/src/client/resources",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":remapped_client_named",
+        ":remapped_deps",
+        "@minecraft//:1.21_client_libraries"
+    ]
+)
+
+remap_jar(
+    name = "mod",
+    classpath = [
+        ":remapped_client_named",
+        "@maven//:net_fabricmc_fabric_api_fabric_api",
+        "@maven//:net_fabricmc_fabric_language_kotlin_1_13_4_kotlin_2_2_0",
+    ],
+    from_namespace = "named",
+    inputs = [":mod_unmapped"],
+    mapping = ":yarn_mapping",
+    mixin = True,
+    to_namespace = "intermediary",
+)
