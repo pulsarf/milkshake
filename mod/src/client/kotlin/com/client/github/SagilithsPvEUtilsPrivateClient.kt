@@ -198,6 +198,8 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
 
     renderHackList(window, context, tabsData.values.toList())
 
+    if (tabsData.size == 0) return
+
     if (renderContent(
       context, 
       tabsData.values.toList()[tabIndex mod tabsData.size],

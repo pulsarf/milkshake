@@ -1,11 +1,12 @@
 {
 	"required": true,
-	"package": "com.github.client.mixin",
+	"package": "com.client.github.milkshake.mixin.antihunger",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
-		"AntiHungerMixin"
+		"MovementPacketMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
-	}
+	},
+	"environment": "client"
 }
