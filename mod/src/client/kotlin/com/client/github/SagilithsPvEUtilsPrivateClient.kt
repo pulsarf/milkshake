@@ -10,8 +10,11 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
 import net.minecraft.client.util.Window
+import net.minecraft.client.font.TextRenderer
 
 import com.client.github.feature.FeatureConfig
+import com.client.github.feature.visual.ExtrasensoryPerception
+import com.client.github.bootstrap.Tick
 
 infix fun Int.mod(mod: Int): Int = (this % mod + mod) % mod
 
@@ -37,16 +40,23 @@ val tabKeyBind = KeyBinding(
 )
 
 object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
-  var MC: MinecraftClient? = null
+  private lateinit var MC: MinecraftClient
+  private lateinit var window: Window
+  private lateinit var textRenderer: TextRenderer
 
-  var upKey: KeyBinding? = null
-  var downKey: KeyBinding? = null
-  var tabKey: KeyBinding? = null
+  private lateinit var upKey: KeyBinding
+  private lateinit var downKey: KeyBinding
+  private lateinit var tabKey: KeyBinding
   
-  var tabViewActive: Boolean = false
+  private var tabViewActive: Boolean = false
+  private var tabIndex: Int = 0
+  private var featureIndex: Int = 0
+  private var offset: Int = 0
 
-  var tabIndex: Int = 0
-  var featureIndex: Int = 0
+  private val width = 100
+  private var height = 0 
+  private val x = 0
+  private val y = 0
 
 	override fun onInitializeClient() {
     MC = MinecraftClient.getInstance()
@@ -56,6 +66,12 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     tabKey = KeyBindingHelper.registerKeyBinding(tabKeyBind)
 
     HudRenderCallback.EVENT.register(::render)
+
+    println("========================================== WORK!")
+
+    Tick.listen()
+
+    ExtrasensoryPerception.bootstrap()
 	}
 
   private fun renderFeature(
@@ -67,19 +83,22 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
   ) {
     val enabled = FeatureConfig.config.getOrDefault(feature, false)
 
+    val color = when {
+      active && enabled -> 0xFFBAF636.toInt()
+      active -> 0xFFFFFFFF.toInt()
+      enabled -> 0xFFA9F527.toInt()
+      else -> 0xFFE6E6E6.toInt()
+    }
+
     context.drawText(
-      MC!!.textRenderer,
+      textRenderer,
       feature,
-      x + (100 - MC!!.textRenderer.getWidth(feature)) / 2,
+      x + (100 - textRenderer.getWidth(feature)) / 2,
       y + 5,
-      if (active) {
-        if (enabled) 0xFFBAF638.toInt() else 0xFFFFFFFF.toInt() 
-      } else {
-        if (enabled) 0xFFA9F527.toInt() else 0xFFE6E6E6.toInt()
-      },
+      color, 
       true
     )
-  }
+  } 
 
   private fun renderContent(
     context: DrawContext,
@@ -92,8 +111,6 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
 
     val selectedFeature = featureList[featureIndex mod featureList.size]
 
-    val window = MC!!.getWindow()
-
     if (!tabViewActive && selectedFeature == "Back") {
       return false
     } else if (!tabViewActive) {
@@ -104,24 +121,16 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
 
     if (upKey!!.wasPressed()) featureIndex++
     if (downKey!!.wasPressed()) featureIndex--
+
+    val contentHeight = offset * (featureList.size + 1) + 5
  
-    val textRenderer = MC!!.textRenderer
-
-    val offset = textRenderer.fontHeight + 5
-
-    val width = 100
-    val height = offset * (featureList.size + 1) + 5
-
-    val x = 0
-    val y = 0
-
     context.fill(
-      x, y, width, height,
+      x, y, width, contentHeight,
       0x80000000.toInt()
     )
 
     context.drawBorder(
-      x, y, width, height,
+      x, y, width, contentHeight,
       0xFFFFFFFF.toInt()
     )
 
@@ -153,7 +162,6 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     featureList: List<List<String>>
   ) {
     var featureList = featureList.flatten()
-    val textRenderer = MC!!.textRenderer 
 
     val activeFeatures = featureList.filter { feature -> FeatureConfig.config.getOrDefault(feature, false) }
     
@@ -175,7 +183,7 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
         textRenderer,
         feature,
         window.scaledWidth - textRenderer.getWidth(feature) - 5,
-        index * textRenderer.fontHeight + 5,
+        index * offset,
         0xFFE6E6E6.toInt(),
         true
       )
@@ -186,24 +194,33 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     context: DrawContext,
     tickCounter: RenderTickCounter
   ) {
-    val tabsData = FeatureConfig.tabsData
+    ExtrasensoryPerception.render(context)
 
-    val textRenderer = MC!!.textRenderer
+    if ((
+      ::window.isInitialized.not() || ::textRenderer.isInitialized.not()
+    ) && (
+      MC.getWindow() != null &&
+      MC.textRenderer != null
+    )) {
+      window = MC.getWindow()
+      textRenderer = MC.textRenderer
 
-    val offset = textRenderer.fontHeight + 5
+      offset = textRenderer.fontHeight + 5 
+      height = FeatureConfig.tabsData.size * offset
+      
+      return
+    } 
 
-    val height = tabsData.size * offset
+    window?.let {
+      renderHackList(window as Window, context, FeatureConfig.tabsData.values.toList())
+    }
 
-    val window = MC!!.getWindow()
-
-    renderHackList(window, context, tabsData.values.toList())
-
-    if (tabsData.size == 0) return
+    if (FeatureConfig.tabsData.size == 0) return
 
     if (renderContent(
       context, 
-      tabsData.values.toList()[tabIndex mod tabsData.size],
-      tabsData.keys.toList()[tabIndex mod tabsData.size]
+      FeatureConfig.tabsData.values.toList()[tabIndex mod FeatureConfig.tabsData.size],
+      FeatureConfig.tabsData.keys.toList()[tabIndex mod FeatureConfig.tabsData.size]
     )) return
 
     featureIndex = 0
@@ -223,9 +240,9 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     if (upKey?.wasPressed() ?: false) tabIndex++
     if (downKey?.wasPressed() ?: false) tabIndex--
 
-    for ((index, value) in tabsData.entries.withIndex()) {
+    for ((index, value) in FeatureConfig.tabsData.entries.withIndex()) {
       val (group, featureList) = value
-      val color = if (index == tabIndex mod tabsData.size) 0xFFA9F527.toInt() else 0xFFE6E6E6.toInt()
+      val color = if (index == tabIndex mod FeatureConfig.tabsData.size) 0xFFA9F527.toInt() else 0xFFE6E6E6.toInt()
       
       context.drawText(
         textRenderer,

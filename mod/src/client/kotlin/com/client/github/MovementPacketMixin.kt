@@ -18,13 +18,15 @@ import com.client.github.feature.player.AntiHunger
 import com.client.github.feature.player.NoFall
 
 @Mixin(PlayerMoveC2SPacket::class)
-abstract class AntiHungerMixin {
+abstract class MovementPacketMixin {
   @Accessor("onGround")
   protected abstract fun getOnGround(): Boolean
     
   @Mutable
   @Accessor("onGround")
   protected abstract fun setOnGround(value: Boolean)
+
+  private val mc: MinecraftClient = MinecraftClient.getInstance()
 
   @Inject(
     method = ["<init>(DDDFFZZZ)V"],
@@ -35,10 +37,8 @@ abstract class AntiHungerMixin {
       shift = At.Shift.AFTER
     )]
   )
-  private fun onGround(callbackInfo: CallbackInfo) {
-    val mc = MinecraftClient.getInstance()
-
-    if (mc == null || mc.player == null || mc.interactionManager == null) return
+  private fun onGround(callbackInfo: CallbackInfo) { 
+    if (mc.player == null || mc.interactionManager == null) return
 
     if (
       NoFall.mod.enabled() &&
