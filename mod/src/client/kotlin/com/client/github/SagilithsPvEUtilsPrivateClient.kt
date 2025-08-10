@@ -77,7 +77,7 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
 
     ExtrasensoryPerception.bootstrap()
 
-    WorldRenderEvents.END.register(::renderWorld)
+    WorldRenderEvents.BEFORE_DEBUG_RENDER.register(::renderWorld)
 	}
 
   private fun renderWorld(world: WorldRenderContext) {

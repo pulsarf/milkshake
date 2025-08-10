@@ -20,26 +20,11 @@ import com.client.github.util.Point
 import kotlin.math.*
 import org.joml.*
 
-fun toDirVec(pitch: Double, yaw: Double): Vec3d {
-  val yawCos = MathHelper.cos(yaw.toFloat()).toDouble()
-  val yawSin = MathHelper.sin(yaw.toFloat()).toDouble()
-
-  val pitchSin = MathHelper.sin(pitch.toFloat()).toDouble()
-  val npitchCos = MathHelper.cos(PI.toFloat() + pitch.toFloat()).toDouble()
-
-  return Vec3d(
-    yawSin * npitchCos,
-    pitchSin,
-    yawCos * npitchCos
-  )
-}
+fun toDirVec(pitch: Float, yaw: Float): Vec3d = Vec3d(0.0, 0.0, 1.0).rotateX(pitch).rotateY(yaw)
 
 fun drawLine(
   matrices: MatrixStack,
   vertexConsumers: VertexConsumerProvider,
-  cameraX: Double,
-  cameraY: Double,
-  cameraZ: Double,
   entityPos: Vec3d,
   targetPos: Vec3d,
   color: Int
@@ -47,8 +32,9 @@ fun drawLine(
   val layer = RenderLayer.getDebugLineStrip(5.0)
   val consumer = vertexConsumers.getBuffer(layer)
 
-  consumer.vertex(matrices.peek(), (entityPos.x - cameraX).toFloat(), (entityPos.y - cameraY).toFloat(), (entityPos.z - cameraZ).toFloat()).color(color)
-  consumer.vertex(matrices.peek(), (targetPos.x - cameraX).toFloat(), (targetPos.y - cameraY).toFloat(), (targetPos.z - cameraZ).toFloat()).color(color) 
+  consumer.vertex(matrices.peek(), targetPos.x.toFloat(), targetPos.y.toFloat(), targetPos.z.toFloat()).color(color)
+  consumer.vertex(matrices.peek(), entityPos.x.toFloat(), entityPos.y.toFloat(), entityPos.z.toFloat()).color(color)
+  consumer.vertex(matrices.peek(), entityPos.x.toFloat(), entityPos.y.toFloat(), entityPos.z.toFloat()).color(color)
 }
 
 fun toRadians(deg: Double): Double = deg / 180.0 * PI
@@ -92,12 +78,14 @@ object ExtrasensoryPerception {
       val camera = mc.getBlockEntityRenderDispatcher().camera
       val cameraPos = camera.getPos()
 
-      val tickDelta = camera.getLastTickDelta()
+      val counter = mc!!.getRenderTickCounter()
+      
+      val tickDelta = counter.getTickDelta(false)
 
-      val camYaw = -MathHelper.wrapDegrees(camera.getYaw().toDouble()) * MathHelper.RADIANS_PER_DEGREE - PI
-      val camPitch = -MathHelper.wrapDegrees(camera.getPitch().toDouble()) * MathHelper.RADIANS_PER_DEGREE
+      val camYaw = -toRadians(mc!!.player!!.getYaw(tickDelta).toDouble())
+      val camPitch = -toRadians(mc!!.player!!.getPitch(tickDelta).toDouble())
 
-      val dirVec = toDirVec(camPitch, camYaw)
+      val dirVec = toDirVec(camPitch.toFloat(), camYaw.toFloat())
 
       if (mc.options.getBobView().getValue()) {
         wasBobblingOn = true
@@ -106,6 +94,8 @@ object ExtrasensoryPerception {
       }
 
       for (entity in entities) {
+        if (entity == mc.player) continue
+
         val color = when {
           entity.isPlayer() && modPlayer.enabled() -> 0xFFB42828
           entity is LivingEntity && modMob.enabled() -> 0xFFB4B428
@@ -116,10 +106,9 @@ object ExtrasensoryPerception {
         val pos = entity.getLerpedPos(tickDelta) ?: continue
         
         drawLine(
-          stack, consumers,
-          cameraPos.getX(), cameraPos.getY(), cameraPos.getZ(),
-          pos.add(0.0, entity.height / 2.0, 0.0),
-          cameraPos.add(dirVec),
+          stack, consumers, 
+          pos.add(0.0, entity.height / 2.0, 0.0).subtract(cameraPos),
+          dirVec,
           color
         )
       }
