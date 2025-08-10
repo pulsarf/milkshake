@@ -4,6 +4,8 @@ import com.client.github.feature.utility.FastBreak
 import com.client.github.feature.utility.FastPlace
 import com.client.github.feature.utility.FreeCam
 import com.client.github.feature.utility.FullBright
+import com.client.github.feature.elytra.ElytraTiming
+import com.client.github.feature.elytra.ElytraFlight
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 
@@ -14,6 +16,8 @@ object Tick {
       FastPlace.tick()
       FreeCam.tick()
       FullBright.tick()
+      ElytraTiming.tick()
+      ElytraFlight.tick()
     }
   }
 }

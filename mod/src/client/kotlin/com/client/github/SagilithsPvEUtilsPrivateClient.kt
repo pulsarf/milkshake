@@ -18,6 +18,9 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
 
 import com.client.github.feature.FeatureConfig
 import com.client.github.feature.visual.ExtrasensoryPerception
+import com.client.github.feature.elytra.ElytraTiming
+import com.client.github.feature.elytra.ElytraFlight
+
 import com.client.github.bootstrap.Tick
 
 infix fun Int.mod(mod: Int): Int = (this % mod + mod) % mod
@@ -76,6 +79,8 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     Tick.listen()
 
     ExtrasensoryPerception.bootstrap()
+    ElytraTiming.bootstrap()
+    ElytraFlight.bootstrap()
 
     WorldRenderEvents.BEFORE_DEBUG_RENDER.register(::renderWorld)
 	}
