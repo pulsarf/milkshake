@@ -3,8 +3,11 @@ package com.client.github.feature.elytra
 import net.minecraft.client.MinecraftClient
 import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket
 import net.minecraft.network.packet.c2s.play.PlayerInputC2SPacket
+import net.minecraft.util.math.Vec3d
+import net.minecraft.entity.Entity
 
 import com.client.github.feature.Module
+import com.client.github.feature.FeatureConfig
 
 object ElytraTiming {
   private val mod = Module(
@@ -15,6 +18,7 @@ object ElytraTiming {
   private lateinit var mc: MinecraftClient
   private var tickCount = 0
   private var requireReset = false
+  private lateinit var resetPos: Vec3d
 
   fun bootstrap() {
     mc = MinecraftClient.getInstance()
@@ -28,6 +32,10 @@ object ElytraTiming {
   fun enter() {
     mc?.networkHandler?.sendPacket(ClientCommandC2SPacket(mc!!.player, ClientCommandC2SPacket.Mode.START_FALL_FLYING))
     mc?.player?.startFallFlying()
+
+    if (FeatureConfig.config.getOrDefault("Elytra flight", false)) {
+      mc?.player?.setPosition(resetPos.getX(), resetPos.getY(), resetPos.getZ())
+    }
 
     requireReset = false
   }
@@ -49,9 +57,10 @@ object ElytraTiming {
       tickCount = 0
     }
 
-    if (tickCount % 19 == 0) {
+    if (tickCount % 15 == 0) {
       quit()
       
+      resetPos = (mc.player as Entity).getPos()
       requireReset = true
     }
   }

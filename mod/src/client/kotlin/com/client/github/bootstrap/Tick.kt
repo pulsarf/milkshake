@@ -6,6 +6,8 @@ import com.client.github.feature.utility.FreeCam
 import com.client.github.feature.utility.FullBright
 import com.client.github.feature.elytra.ElytraTiming
 import com.client.github.feature.elytra.ElytraFlight
+import com.client.github.feature.visual.Zoom
+import com.client.github.feature.combat.KillAura
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 
@@ -18,6 +20,8 @@ object Tick {
       FullBright.tick()
       ElytraTiming.tick()
       ElytraFlight.tick()
+      Zoom.tick()
+      KillAura.tick()
     }
   }
 }

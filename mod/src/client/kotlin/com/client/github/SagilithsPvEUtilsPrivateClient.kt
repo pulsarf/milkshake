@@ -18,8 +18,10 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
 
 import com.client.github.feature.FeatureConfig
 import com.client.github.feature.visual.ExtrasensoryPerception
+import com.client.github.feature.visual.Zoom
 import com.client.github.feature.elytra.ElytraTiming
 import com.client.github.feature.elytra.ElytraFlight
+import com.client.github.feature.combat.KillAura
 
 import com.client.github.bootstrap.Tick
 
@@ -39,6 +41,20 @@ val downArrowBind = KeyBinding(
   "net.minecraft.client.option"
 )
 
+val leftArrowBind = KeyBinding(
+  "key.move.left",
+  InputUtil.Type.KEYSYM,
+  InputUtil.GLFW_KEY_LEFT,
+  "net.minecraft.client.option"
+)
+
+val rightArrowBind = KeyBinding(
+  "key.move.right",
+  InputUtil.Type.KEYSYM,
+  InputUtil.GLFW_KEY_RIGHT,
+  "net.minecraft.client.option"
+)
+
 val tabKeyBind = KeyBinding(
   "key.strafe.left",
   InputUtil.Type.KEYSYM,
@@ -54,13 +70,15 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
   private lateinit var upKey: KeyBinding
   private lateinit var downKey: KeyBinding
   private lateinit var tabKey: KeyBinding
+  private lateinit var leftKey: KeyBinding
+  private lateinit var rightKey: KeyBinding
   
   private var tabViewActive: Boolean = false
   private var tabIndex: Int = 0
   private var featureIndex: Int = 0
   private var offset: Int = 0
 
-  private val width = 100
+  private val width = 85
   private var height = 0 
   private val x = 0
   private val y = 0
@@ -71,6 +89,8 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     upKey = KeyBindingHelper.registerKeyBinding(upArrowBind)
     downKey = KeyBindingHelper.registerKeyBinding(downArrowBind)
     tabKey = KeyBindingHelper.registerKeyBinding(tabKeyBind)
+    leftKey = KeyBindingHelper.registerKeyBinding(leftArrowBind)
+    rightKey = KeyBindingHelper.registerKeyBinding(rightArrowBind)
 
     HudRenderCallback.EVENT.register(::render)
 
@@ -81,6 +101,8 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     ExtrasensoryPerception.bootstrap()
     ElytraTiming.bootstrap()
     ElytraFlight.bootstrap()
+    Zoom.bootstrap()
+    KillAura.bootstrap()
 
     WorldRenderEvents.BEFORE_DEBUG_RENDER.register(::renderWorld)
 	}
@@ -111,7 +133,7 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     context.drawText(
       textRenderer,
       feature,
-      x + (100 - textRenderer.getWidth(feature)) / 2,
+      x + (width - textRenderer.getWidth(feature)) / 2,
       y + 5,
       color, 
       true
@@ -121,53 +143,32 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
   private fun renderContent(
     context: DrawContext,
     featureList: List<String>,
-    header: String
+    header: String,
+    tabIndex: Int,
+    selectedIndex: Int,
+    pressed: Boolean
   ): Boolean {
-    if (tabKey!!.wasPressed()) {
-      tabViewActive = !tabViewActive
-    }
-
-    val selectedFeature = featureList[featureIndex mod featureList.size]
-
-    if (!tabViewActive && selectedFeature == "Back") {
-      return false
-    } else if (!tabViewActive) {
-      FeatureConfig.config.put(selectedFeature, !FeatureConfig.config.getOrDefault(selectedFeature, false))
-
-      tabViewActive = true
-    }
-
     if (upKey!!.wasPressed()) featureIndex++
     if (downKey!!.wasPressed()) featureIndex--
 
-    val contentHeight = offset * (featureList.size + 1) + 5
- 
-    context.fill(
-      x, y, width, contentHeight,
-      0x80000000.toInt()
-    )
+    val contentHeight = offset * (featureList.size + 1) + 15
+    val windowX = x + (tabIndex * (width + 15)) + 15
 
-    context.drawBorder(
-      x, y, width, contentHeight,
-      0xFFFFFFFF.toInt()
-    )
-
-    context.drawText(
-      textRenderer,
-      header,
-      (100 - textRenderer.getWidth(header)) / 2,
-      y + 5,
-      0xFFAAAAAA.toInt(),
-      true
-    )
+    context.drawBorder(windowX, 10, width, contentHeight, 0xFFFFFFFF.toInt())
 
     for ((index, feature) in featureList.withIndex()) {
+      val windowY = y + (index + 1) * offset + 10 
+
+      val active = index == featureIndex mod featureList.size && selectedIndex == tabIndex
+
+      if (pressed && active) FeatureConfig.config.put(feature, !FeatureConfig.config.getOrDefault(feature, false))
+
       renderFeature(
-        x,
-        y + (index + 1) * offset,
+        windowX,
+        windowY,
         feature,
         context,
-        index == featureIndex mod featureList.size
+        active 
       )
     }
 
@@ -180,21 +181,7 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     featureList: List<List<String>>
   ) {
     var featureList = featureList.flatten()
-
     val activeFeatures = featureList.filter { feature -> FeatureConfig.config.getOrDefault(feature, false) }
-    
-    if (activeFeatures.isEmpty()) {
-      context.drawText(
-        textRenderer,
-        "Legit, no hacks",
-        window.scaledWidth - textRenderer.getWidth("Legit, no hacks") - 5,
-        5,
-        0xFFA9F527.toInt(),
-        true
-      )
-
-      return
-    }
 
     activeFeatures.forEachIndexed { index, feature -> 
       context.drawText(
@@ -233,28 +220,19 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
 
     if (FeatureConfig.tabsData.size == 0) return
 
-    if (renderContent(
+    val pressed = tabKey!!.wasPressed()
+
+    for (ctabIndex in 0..<FeatureConfig.tabsData.size) renderContent(
       context, 
-      FeatureConfig.tabsData.values.toList()[tabIndex mod FeatureConfig.tabsData.size],
-      FeatureConfig.tabsData.keys.toList()[tabIndex mod FeatureConfig.tabsData.size]
-    )) return
-
-    featureIndex = 0
-
-    context.fill(0, 0, 100, 80, 0x80000000.toInt())
-    context.drawBorder(0, 0, 100, 80, 0xFFFFFFFF.toInt());
-
-    context.drawText(
-      textRenderer,
-      "Milkshake",
-      (100 - textRenderer.getWidth("Milkshake")) / 2,
-      5,
-      0xFFAAAAAA.toInt(),
-      true
+      FeatureConfig.tabsData.values.toList()[ctabIndex],
+      FeatureConfig.tabsData.keys.toList()[ctabIndex],
+      ctabIndex,
+      tabIndex mod FeatureConfig.tabsData.size,
+      pressed
     )
 
-    if (upKey?.wasPressed() ?: false) tabIndex++
-    if (downKey?.wasPressed() ?: false) tabIndex--
+    if (rightKey?.wasPressed() ?: false) tabIndex++
+    if (leftKey?.wasPressed() ?: false) tabIndex--
 
     for ((index, value) in FeatureConfig.tabsData.entries.withIndex()) {
       val (group, featureList) = value
@@ -263,8 +241,8 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
       context.drawText(
         textRenderer,
         group,
-        (100 - textRenderer.getWidth(group)) / 2,
-        (index + 1) * offset + 5,
+        ((width + 15) * index) + 15 + (width - textRenderer.getWidth(group)) / 2,
+        15,
         color,
         false
       )

@@ -13,7 +13,7 @@ open class Module(
     FeatureConfig.config.put(featureName, false)
 
     if (!FeatureConfig.tabsData.containsKey(featureGroup)) {
-      FeatureConfig.tabsData.put(featureGroup, mutableListOf("Back", featureName)) 
+      FeatureConfig.tabsData.put(featureGroup, mutableListOf(featureName)) 
     } else if ((FeatureConfig.tabsData.get(featureGroup)?.contains(featureName)?.not()) ?: true) {
       FeatureConfig.tabsData.get(featureGroup)!!.add(featureName)
     }
