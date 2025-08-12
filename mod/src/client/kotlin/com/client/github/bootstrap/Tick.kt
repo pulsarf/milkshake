@@ -8,6 +8,7 @@ import com.client.github.feature.elytra.ElytraTiming
 import com.client.github.feature.elytra.ElytraFlight
 import com.client.github.feature.visual.Zoom
 import com.client.github.feature.combat.KillAura
+import com.client.github.feature.player.AntiFireDamage
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 
@@ -22,6 +23,7 @@ object Tick {
       ElytraFlight.tick()
       Zoom.tick()
       KillAura.tick()
+      AntiFireDamage.tick()
     }
   }
 }

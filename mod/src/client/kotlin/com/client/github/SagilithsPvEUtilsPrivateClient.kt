@@ -22,6 +22,7 @@ import com.client.github.feature.visual.Zoom
 import com.client.github.feature.elytra.ElytraTiming
 import com.client.github.feature.elytra.ElytraFlight
 import com.client.github.feature.combat.KillAura
+import com.client.github.feature.player.AntiFireDamage
 
 import com.client.github.bootstrap.Tick
 
@@ -103,6 +104,7 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     ElytraFlight.bootstrap()
     Zoom.bootstrap()
     KillAura.bootstrap()
+    AntiFireDamage.bootstrap()
 
     WorldRenderEvents.BEFORE_DEBUG_RENDER.register(::renderWorld)
 	}
