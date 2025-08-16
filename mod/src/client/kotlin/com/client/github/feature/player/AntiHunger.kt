@@ -7,4 +7,8 @@ object AntiHunger {
     "Player",
     "Anti hunger"
   )
+
+  init {
+    mod.enable()
+  }
 }

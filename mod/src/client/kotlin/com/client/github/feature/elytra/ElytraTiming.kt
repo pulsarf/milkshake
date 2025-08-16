@@ -22,6 +22,7 @@ object ElytraTiming {
 
   fun bootstrap() {
     mc = MinecraftClient.getInstance()
+    mod.enable()
   }
 
   fun quit() {

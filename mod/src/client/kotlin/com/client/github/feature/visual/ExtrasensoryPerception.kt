@@ -20,6 +20,8 @@ import com.client.github.util.Point
 import kotlin.math.*
 import org.joml.*
 
+val layer = RenderLayer.getDebugLineStrip(5.0)
+
 fun toDirVec(pitch: Float, yaw: Float): Vec3d = Vec3d(0.0, 0.0, 1.0).rotateX(pitch).rotateY(yaw)
 
 fun drawLine(
@@ -29,7 +31,6 @@ fun drawLine(
   targetPos: Vec3d,
   color: Int
 ) {
-  val layer = RenderLayer.getDebugLineStrip(5.0)
   val consumer = vertexConsumers.getBuffer(layer)
 
   consumer.vertex(matrices.peek(), targetPos.x.toFloat(), targetPos.y.toFloat(), targetPos.z.toFloat()).color(color)
@@ -60,6 +61,8 @@ object ExtrasensoryPerception {
 
   fun bootstrap() {
     mc = MinecraftClient.getInstance()
+
+    modPlayer.enable()
   }
 
   fun render(stack: MatrixStack, consumers: VertexConsumerProvider) {

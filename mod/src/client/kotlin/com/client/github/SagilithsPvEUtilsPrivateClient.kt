@@ -4,6 +4,7 @@ import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
 
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.render.RenderTickCounter
@@ -14,7 +15,7 @@ import net.minecraft.client.util.Window
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.client.render.WorldRenderer
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
+import net.minecraft.util.Identifier
 
 import com.client.github.feature.FeatureConfig
 import com.client.github.feature.visual.ExtrasensoryPerception
@@ -23,38 +24,12 @@ import com.client.github.feature.elytra.ElytraTiming
 import com.client.github.feature.elytra.ElytraFlight
 import com.client.github.feature.combat.KillAura
 import com.client.github.feature.player.AntiFireDamage
-
+import com.client.github.components.Circle.*
 import com.client.github.bootstrap.Tick
 
+import kotlin.math.*
+
 infix fun Int.mod(mod: Int): Int = (this % mod + mod) % mod
-
-val upArrowBind = KeyBinding(
-  "key.move.back",
-  InputUtil.Type.KEYSYM,
-  InputUtil.GLFW_KEY_DOWN,
-  "net.minecraft.client.option"
-)
-
-val downArrowBind = KeyBinding(
-  "key.move.up",
-  InputUtil.Type.KEYSYM,
-  InputUtil.GLFW_KEY_UP,
-  "net.minecraft.client.option"
-)
-
-val leftArrowBind = KeyBinding(
-  "key.move.left",
-  InputUtil.Type.KEYSYM,
-  InputUtil.GLFW_KEY_LEFT,
-  "net.minecraft.client.option"
-)
-
-val rightArrowBind = KeyBinding(
-  "key.move.right",
-  InputUtil.Type.KEYSYM,
-  InputUtil.GLFW_KEY_RIGHT,
-  "net.minecraft.client.option"
-)
 
 val tabKeyBind = KeyBinding(
   "key.strafe.left",
@@ -67,35 +42,26 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
   private lateinit var MC: MinecraftClient
   private lateinit var window: Window
   private lateinit var textRenderer: TextRenderer
-
-  private lateinit var upKey: KeyBinding
-  private lateinit var downKey: KeyBinding
   private lateinit var tabKey: KeyBinding
-  private lateinit var leftKey: KeyBinding
-  private lateinit var rightKey: KeyBinding
   
   private var tabViewActive: Boolean = false
-  private var tabIndex: Int = 0
-  private var featureIndex: Int = 0
-  private var offset: Int = 0
+  private var selectedGroup: String? = null
+  private var mouseHolding: Boolean = false
+  private var clicked: Boolean = false
 
   private val width = 85
   private var height = 0 
   private val x = 0
   private val y = 0
+  private var offset = 0
+  private var lastClick = 0f
 
 	override fun onInitializeClient() {
     MC = MinecraftClient.getInstance()
 
-    upKey = KeyBindingHelper.registerKeyBinding(upArrowBind)
-    downKey = KeyBindingHelper.registerKeyBinding(downArrowBind)
     tabKey = KeyBindingHelper.registerKeyBinding(tabKeyBind)
-    leftKey = KeyBindingHelper.registerKeyBinding(leftArrowBind)
-    rightKey = KeyBindingHelper.registerKeyBinding(rightArrowBind)
 
     HudRenderCallback.EVENT.register(::render)
-
-    println("========================================== WORK!")
 
     Tick.listen()
 
@@ -109,72 +75,26 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     WorldRenderEvents.BEFORE_DEBUG_RENDER.register(::renderWorld)
 	}
 
+  private fun updateMouse() {
+    val time = System.currentTimeMillis().toFloat()
+
+    if (MC.mouse.wasLeftButtonClicked()) {
+      if (!mouseHolding && time - lastClick > 50f) {
+        clicked = true
+        mouseHolding = true
+
+        //lastClick = time
+      }
+    } else {
+      mouseHolding = false 
+    }
+  }
+
   private fun renderWorld(world: WorldRenderContext) {
     val stack = world?.matrixStack() ?: return
     val consumers = world?.consumers() ?: return
     
     ExtrasensoryPerception.render(stack, consumers)
-  }
-
-  private fun renderFeature(
-    x: Int,
-    y: Int,
-    feature: String,
-    context: DrawContext,
-    active: Boolean
-  ) {
-    val enabled = FeatureConfig.config.getOrDefault(feature, false)
-
-    val color = when {
-      active && enabled -> 0xFFBAF636.toInt()
-      active -> 0xFFFFFFFF.toInt()
-      enabled -> 0xFFA9F527.toInt()
-      else -> 0xFFE6E6E6.toInt()
-    }
-
-    context.drawText(
-      textRenderer,
-      feature,
-      x + (width - textRenderer.getWidth(feature)) / 2,
-      y + 5,
-      color, 
-      true
-    )
-  } 
-
-  private fun renderContent(
-    context: DrawContext,
-    featureList: List<String>,
-    header: String,
-    tabIndex: Int,
-    selectedIndex: Int,
-    pressed: Boolean
-  ): Boolean {
-    if (upKey!!.wasPressed()) featureIndex++
-    if (downKey!!.wasPressed()) featureIndex--
-
-    val contentHeight = offset * (featureList.size + 1) + 15
-    val windowX = x + (tabIndex * (width + 15)) + 15
-
-    context.drawBorder(windowX, 10, width, contentHeight, 0xFFFFFFFF.toInt())
-
-    for ((index, feature) in featureList.withIndex()) {
-      val windowY = y + (index + 1) * offset + 10 
-
-      val active = index == featureIndex mod featureList.size && selectedIndex == tabIndex
-
-      if (pressed && active) FeatureConfig.config.put(feature, !FeatureConfig.config.getOrDefault(feature, false))
-
-      renderFeature(
-        windowX,
-        windowY,
-        feature,
-        context,
-        active 
-      )
-    }
-
-    return true
   }
 
   private fun renderHackList(
@@ -197,57 +117,114 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     }
   }
 
+  private fun renderFeatureSelection(context: DrawContext) {
+    val group = FeatureConfig.tabsData.get(selectedGroup)
+    val len = group?.size ?: return
+    val scaledWidth = window.scaledWidth
+    val scaledHeight = window.scaledHeight
+    val buttonFloat = 60
+    val mouseX = MC.mouse.getX().toFloat() / window.getScaleFactor().toFloat()
+    val mouseY = MC.mouse.getY().toFloat() / window.getScaleFactor().toFloat()
+    var dist = 10000f
+    var minIndex = 0
+
+    group?.forEachIndexed({ index, feature ->
+      val x = ceil(scaledWidth / 2 + cos(index.toFloat() / len * PI.toFloat() * 2f) * buttonFloat).toInt() - 10
+      val y = ceil(scaledHeight / 2 + sin(index.toFloat() / len * PI.toFloat() * 2f) * buttonFloat).toInt() - 10
+
+      if (hypot(mouseX - x, mouseY - y) < dist) {
+        dist = hypot(mouseX - x, mouseY - y)
+        minIndex = index
+      }
+    })
+
+    group?.forEachIndexed({ index, feature ->
+      val defaultTexture = Identifier.ofVanilla(FeatureConfig.textures.getOrDefault(feature, "textures/item/spyglass.png"))
+
+      val size = if (index == minIndex) 30 else 20
+      val x = ceil(scaledWidth / 2 + cos(index.toFloat() / len * PI.toFloat() * 2f) * buttonFloat).toInt() - size / 2
+      val y = ceil(scaledHeight / 2 + sin(index.toFloat() / len * PI.toFloat() * 2f) * buttonFloat).toInt() - size / 2
+      val krovin = (if (FeatureConfig.config.getOrDefault(feature, false)) 0xFFA6FFA6 else 0xFFFFFFFF).toInt()
+
+      if (size == 30 && clicked) {
+        clicked = false
+
+        if (feature == "Back") {
+          selectedGroup = null
+
+          return
+        }
+
+        FeatureConfig.config.put(feature, !FeatureConfig.config.getOrDefault(feature, false))
+      }
+
+      context.drawTexture(defaultTexture, x, y, 0f, 0f, size, size, size, size)
+      context.drawText(textRenderer, feature, x - textRenderer.getWidth(feature) / 2 + size / 2, y + 35, krovin, true)
+    })
+  }
+
   private fun render(
     context: DrawContext,
     tickCounter: RenderTickCounter
   ) {
-    if ((
-      ::window.isInitialized.not() || ::textRenderer.isInitialized.not()
-    ) && (
-      MC.getWindow() != null &&
-      MC.textRenderer != null
-    )) {
-      window = MC.getWindow()
-      textRenderer = MC.textRenderer
+    window = MC?.getWindow() ?: return
+    textRenderer = MC?.textRenderer ?: return
+    offset = textRenderer.fontHeight + 5
+    height = FeatureConfig.tabsData.size * offset
 
-      offset = textRenderer.fontHeight + 5 
-      height = FeatureConfig.tabsData.size * offset
+    renderHackList(window, context, FeatureConfig.tabsData.values.toList())
+
+    if (tabKey.wasPressed())
+      tabViewActive = !tabViewActive
+
+    if (!tabViewActive) return
+
+    updateMouse()
+
+    selectedGroup?.let {
+      renderFeatureSelection(context)
       
-      return
-    } 
-
-    window?.let {
-      renderHackList(window as Window, context, FeatureConfig.tabsData.values.toList())
+      return@render
     }
 
-    if (FeatureConfig.tabsData.size == 0) return
+    val time = System.currentTimeMillis().toFloat() / 1700
 
-    val pressed = tabKey!!.wasPressed()
+    val scaledWidth = window.scaledWidth
+    val scaledHeight = window.scaledHeight
 
-    for (ctabIndex in 0..<FeatureConfig.tabsData.size) renderContent(
-      context, 
-      FeatureConfig.tabsData.values.toList()[ctabIndex],
-      FeatureConfig.tabsData.keys.toList()[ctabIndex],
-      ctabIndex,
-      tabIndex mod FeatureConfig.tabsData.size,
-      pressed
-    )
+    val len = FeatureConfig.tabsData.keys.size.toFloat()
+    val buttonFloat = 60
 
-    if (rightKey?.wasPressed() ?: false) tabIndex++
-    if (leftKey?.wasPressed() ?: false) tabIndex--
+    val mouseX = MC.mouse.getX().toFloat() / window.getScaleFactor().toFloat()
+    val mouseY = MC.mouse.getY().toFloat() / window.getScaleFactor().toFloat()
+    
+    var dist = 10000f
+    var minIndex = 0
 
-    for ((index, value) in FeatureConfig.tabsData.entries.withIndex()) {
-      val (group, featureList) = value
-      val color = if (index == tabIndex mod FeatureConfig.tabsData.size) 0xFFA9F527.toInt() else 0xFFE6E6E6.toInt()
-      
-      context.drawText(
-        textRenderer,
-        group,
-        ((width + 15) * index) + 15 + (width - textRenderer.getWidth(group)) / 2,
-        15,
-        color,
-        false
-      )
-    } 
+    FeatureConfig.tabsData.keys.forEachIndexed { index, featureName ->
+      val x = ceil(scaledWidth / 2 + cos(index.toFloat() / len * PI.toFloat() * 2f) * buttonFloat).toInt() - 10
+      val y = ceil(scaledHeight / 2 + sin(index.toFloat() / len * PI.toFloat() * 2f) * buttonFloat).toInt() - 10
+
+      if (hypot(mouseX - x, mouseY - y) < dist) {
+        dist = hypot(mouseX - x, mouseY - y)
+        minIndex = index
+      }
+    }
+
+    FeatureConfig.tabsData.keys.forEachIndexed { index, featureName ->
+      val defaultTexture = Identifier.ofVanilla(FeatureConfig.textures.get(featureName))
+
+      val size = if (index == minIndex) 30 else 20
+      val x = ceil(scaledWidth / 2 + cos(index.toFloat() / len * PI.toFloat() * 2f) * buttonFloat).toInt() - size / 2
+      val y = ceil(scaledHeight / 2 + sin(index.toFloat() / len * PI.toFloat() * 2f) * buttonFloat).toInt() - size / 2
+
+      if (size == 30 && clicked) {
+        selectedGroup = featureName
+        clicked = false
+      }
+
+      context.drawTexture(defaultTexture, x, y, 0f, 0f, size, size, size, size)
+      context.drawText(textRenderer, featureName, x - textRenderer.getWidth(featureName) / 2 + size / 2, y + 35, 0xFFFFFFFF.toInt(), true)
+    }
   }
 }
