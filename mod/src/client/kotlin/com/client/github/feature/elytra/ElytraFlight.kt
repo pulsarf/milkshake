@@ -16,9 +16,14 @@ object ElytraFlight {
     "Elytra flight"
   )
 
+  private val grimFlight = Module(
+    "Elytra",
+    "Elytra flight:AAC"
+  )
+
   private lateinit var mc: MinecraftClient
 
-  public var velocity = 0.25
+  public var velocity = 0.2
 
   fun bootstrap() {
     mc = MinecraftClient.getInstance()
@@ -46,8 +51,30 @@ object ElytraFlight {
     movementVec = movementVec.multiply(1.0, 0.0, 1.0)
 
     if (mc?.options?.jumpKey!!.isPressed()) movementVec = movementVec.add(0.0, 1.0, 0.0)
-    else if (mc?.options?.sneakKey!!.isPressed()) movementVec = movementVec.add(0.0, -1.0, 0.0) 
+    else if (mc?.options?.sneakKey!!.isPressed()) movementVec = movementVec.add(0.0, -1.0, 0.0)
 
-    mc?.player?.setVelocity(movementVec.normalize())
+    if (grimFlight.enabled()) {
+      val rot = mc!!.player!!.getYaw() * 0.017453292f
+      val cr = cos(rot) * cos(rot)
+      val hs = sqrt(straight.getX() * straight.getX() + straight.getZ() * straight.getZ())
+
+      movementVec = movementVec.add(0.0, 0.01 * (cr * 0.75 - 1), 0.0)
+      
+      // fall slowdown
+
+      if (hs > 0.0) {
+        if (movementVec.getY() < 0.0) {
+          val mot = -movementVec.getY() / 10.0 * cr
+          movementVec = movementVec.add(straight.getX() * mot / hs, mot, straight.getZ() * mot / hs)
+        }
+
+        if (rot < 0f) {
+          val mot = hs * sin(rot + PI) * 0.04
+          movementVec = movementVec.add(-straight.getX() * mot / hs, mot * 3.2, -straight.getZ() * mot / hs)
+        }
+      }
+
+      mc?.player?.addVelocity(movementVec.multiply(velocity))
+    } else mc?.player?.setVelocity(movementVec)
   }
 }

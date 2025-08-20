@@ -7,8 +7,4 @@ object NoFall {
     "Player",
     "Anti fall damage"
   )
-
-  init {
-    mod.enable()
-  }
 }

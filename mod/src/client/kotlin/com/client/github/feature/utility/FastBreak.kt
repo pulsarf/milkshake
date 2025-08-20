@@ -20,10 +20,6 @@ object FastBreak {
 
   val mc = MinecraftClient.getInstance()
 
-  init {
-    mod.enable()
-  }
-
   fun tick() {
     if (!mod.enabled()) return  
 

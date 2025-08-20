@@ -20,6 +20,7 @@ object AntiFireDamage {
   }
 
   fun tick() {
+    if (!mod.enabled()) return
     if (mc.player == null) return
 
     val player = mc.player

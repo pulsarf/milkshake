@@ -19,8 +19,6 @@ object FastPlace {
 
   val itemUseCooldown = MinecraftClient::class.java.getDeclaredField(itemTargetField)
 
-  init { mod.enable() }
-
   fun tick() {
     if (!mod.enabled()) return 
 

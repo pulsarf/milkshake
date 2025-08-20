@@ -25,12 +25,26 @@ object ElytraTiming {
     mod.enable()
   }
 
+  internal fun filterForGrimAC(): Boolean? {
+    if (mc?.player?.hasVehicle() ?: true) return null
+    if (mc?.player?.isOnGround() ?: true) return null
+    if (mc?.player?.isTouchingWater() ?: true) return null
+
+    return true
+  }
+
   fun quit() {
+    if (mc?.player?.isFallFlying()?.not() ?: true) return
+    filterForGrimAC() ?: return
+
     mc?.networkHandler?.sendPacket(ClientCommandC2SPacket(mc!!.player, ClientCommandC2SPacket.Mode.START_FALL_FLYING))
     mc?.player?.stopFallFlying()
   }
 
   fun enter() {
+    if (mc?.player?.isFallFlying() ?: true) return
+    filterForGrimAC() ?: return
+
     mc?.networkHandler?.sendPacket(ClientCommandC2SPacket(mc!!.player, ClientCommandC2SPacket.Mode.START_FALL_FLYING))
     mc?.player?.startFallFlying()
 
