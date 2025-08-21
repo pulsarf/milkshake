@@ -169,6 +169,9 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     offset = textRenderer.fontHeight + 5
     height = FeatureConfig.tabsData.size * offset
 
+    LagAlert.render(context)
+    DangerMobAlert.render(context)
+
     renderHackList(window, context, FeatureConfig.tabsData.values.toList())
 
     if (tabKey.wasPressed())

@@ -84,7 +84,7 @@ object KillAura {
         if (entity is EndCrystalEntity) continue
         if (!entity.isAttackable()) continue
 
-        hit(entity) ?: return
+        hit(entity) ?: continue
 
         break
       }

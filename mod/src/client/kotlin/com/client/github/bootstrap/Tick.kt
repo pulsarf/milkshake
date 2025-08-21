@@ -22,6 +22,9 @@ object Tick {
       HoldHit.tick()
       AntiFireDamage.tick()
       Sprint.tick() // IMPORTANT: Sprint module should be ran after all hits, otherwise we'll get consta sweep hits
+      NoJumpDelay.tick()
+      LagAlert.tick()
+      DangerMobAlert.tick()
     }
   }
 }
