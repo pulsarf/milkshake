@@ -21,6 +21,8 @@ object DangerMobAlert {
   private lateinit var hostileEntities: List<Entity>
 
   fun tick() {
+    if (!mod.enabled()) return
+
     val player = mc?.player ?: return
     val world = mc?.world ?: return
     val entities = world?.getEntities() ?: return
@@ -32,6 +34,7 @@ object DangerMobAlert {
 
   fun render(context: DrawContext) {
     if (!::hostileEntities.isInitialized) return
+    if (!mod.enabled()) return
 
     val textRenderer = mc?.textRenderer ?: return
     val window = mc?.getWindow() ?: return

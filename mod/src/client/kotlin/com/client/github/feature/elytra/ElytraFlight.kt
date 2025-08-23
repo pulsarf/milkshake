@@ -3,6 +3,7 @@ package com.client.github.feature.elytra
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.Vec3d
 import net.minecraft.util.math.MathHelper
+import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket
 
 import com.client.github.feature.Module
 
@@ -21,9 +22,40 @@ object ElytraFlight {
     "Elytra flight:AAC"
   )
 
+  val bounceFlight = Module(
+    "Elytra",
+    "Elytra flight:Bounce"
+  )
+
+  val bounceFlightLegit = Module(
+    "Elytra",
+    "Elytra flight:Bounce:Legit"
+  )
+
+  val boostFlight = Module(
+    "Elytra",
+    "Elytra flight:Boost"
+  )
+
   private lateinit var mc: MinecraftClient
 
   public var velocity = 0.02
+
+  internal fun bounceFly() {
+    val player = mc.player ?: return
+
+    if (bounceFlightLegit.enabled()) mc.options.jumpKey.setPressed(true)
+
+    if (!player.isFallFlying() && !player.isOnGround()) {
+      if (!bounceFlightLegit.enabled()) player.jump()
+      player.startFallFlying()
+      mc?.networkHandler?.sendPacket(ClientCommandC2SPacket(player, ClientCommandC2SPacket.Mode.START_FALL_FLYING))
+    }
+  }
+
+  internal fun boostFlight() {
+
+  }
 
   fun bootstrap() {
     mc = MinecraftClient.getInstance()
@@ -31,8 +63,11 @@ object ElytraFlight {
 
   fun tick() {
     if (!mod.enabled()) return
+    if (bounceFlight.enabled()) return bounceFly()
     if (!(mc?.player?.isFallFlying() ?: false)) return
 
+    if (boostFlight.enabled()) return boostFlight()
+ 
     var movementVec = Vec3d.ZERO
 
     val camera = mc?.gameRenderer?.getCamera() ?: return

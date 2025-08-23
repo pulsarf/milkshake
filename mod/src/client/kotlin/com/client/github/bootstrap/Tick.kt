@@ -27,6 +27,7 @@ object Tick {
       LagAlert.tick()
       DangerMobAlert.tick()
       BoatFlight.tick()
+      PlayerFlight.tick()
     }
   }
 }

@@ -42,7 +42,6 @@ object BoatFlight {
   }
 
   fun tick() {
-    if (!mod.enabled()) return
     if (!(mc?.player?.hasVehicle() ?: false)) {
       if (autoBreak.enabled()) {
         val player = mc.player ?: return
@@ -65,6 +64,8 @@ object BoatFlight {
 
       return
     }
+
+    if (!mod.enabled()) return
 
     val vehicle = mc?.player?.getVehicle() ?: return
 
