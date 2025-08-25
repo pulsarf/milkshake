@@ -1,9 +1,14 @@
 {
 	"required": true,
-	"package": "com.client.github.milkshake.mixin.antihunger",
+	"package": "com.client.github.milkshake.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
-		"MovementPacketMixin"
+		"MovementPacketMixin",
+		"AntiTelemetryMixin",
+		"MinecraftClientMixin",
+		"ThreadExecutorMixin",
+		"EntityMixin",
+		"BlockModelRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

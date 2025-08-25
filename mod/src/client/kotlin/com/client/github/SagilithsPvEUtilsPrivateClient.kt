@@ -130,7 +130,7 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     val len = group?.size ?: return
     val scaledWidth = window.scaledWidth
     val scaledHeight = window.scaledHeight
-    val buttonFloat = 60
+    val buttonFloat = 100
     val mouseX = MC.mouse.getX().toFloat() / window.getScaleFactor().toFloat()
     val mouseY = MC.mouse.getY().toFloat() / window.getScaleFactor().toFloat()
     var dist = 10000f

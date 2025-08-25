@@ -41,10 +41,14 @@ object ElytraFlight {
 
   public var velocity = 0.02
 
+  private var bouncePitch: Float? = null
+
   internal fun bounceFly() {
     val player = mc.player ?: return
 
     if (bounceFlightLegit.enabled()) mc.options.jumpKey.setPressed(true)
+
+    bouncePitch?.let { player.setPitch(bouncePitch as Float) }
 
     if (!player.isFallFlying() && !player.isOnGround()) {
       if (!bounceFlightLegit.enabled()) player.jump()
@@ -53,8 +57,24 @@ object ElytraFlight {
     }
   }
 
-  internal fun boostFlight() {
+  private var boostStartPitch = 32.5
+  private var boostEndPitch = -49.0
+  private var boostCDownVel = 0.5f
 
+  private fun aboutToHitGround(): Boolean? = !(0..3).all { mc!!.world!!.getBlockState(mc!!.player!!.getBlockPos()!!.down(it))!!.isAir() }
+
+  internal fun boostFlight() {
+    val player = mc.player ?: return
+ 
+    player.setPitch(
+      if (aboutToHitGround() ?: false) {
+        boostEndPitch -= boostCDownVel
+        boostEndPitch.toFloat()
+      } else {
+        boostEndPitch = -49.0
+        boostStartPitch.toFloat()
+      }
+    )
   }
 
   fun bootstrap() {

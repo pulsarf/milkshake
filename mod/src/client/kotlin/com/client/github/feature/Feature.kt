@@ -27,9 +27,10 @@ open class Module(
     }
   }
 
-  open fun enabled(): Boolean = FeatureConfig.config.getOrDefault(featureName, false)
+  fun enabled(): Boolean = FeatureConfig.config.getOrDefault(featureName, false)
+  fun disabled(): Boolean = enabled().not()
 
-  open fun enable() {
+  fun enable() {
     FeatureConfig.config.put(featureName, true)
   }
 }

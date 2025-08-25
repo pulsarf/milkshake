@@ -24,7 +24,7 @@ object LagAlert {
   fun render(context: DrawContext) {
     val lagTime = System.currentTimeMillis() - lastWorldUpdate
 
-    if (lagTime < 100) return
+    if (lagTime < 300) return
 
     val textRenderer = mc?.textRenderer ?: return
     val window = mc?.getWindow() ?: return
