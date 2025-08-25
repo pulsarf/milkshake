@@ -27,6 +27,7 @@ import com.client.github.feature.combat.*
 import com.client.github.feature.player.*
 import com.client.github.components.Circle.*
 import com.client.github.bootstrap.Tick
+import com.client.github.clickgui.Composer
 
 import kotlin.math.*
 
@@ -125,7 +126,7 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
     }
   }
 
-  private fun renderFeatureSelection(context: DrawContext) {
+  /*private fun renderFeatureSelection(context: DrawContext) {
     val group = FeatureConfig.tabsData.get(selectedGroup)
     val len = group?.size ?: return
     val scaledWidth = window.scaledWidth
@@ -169,7 +170,7 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
       context.drawTexture(defaultTexture, x, y, 0f, 0f, size, size, size, size)
       context.drawText(textRenderer, feature, x - textRenderer.getWidth(feature) / 2 + size / 2, y + 35, krovin, true)
     })
-  }
+  }*/
 
   private fun render(
     context: DrawContext,
@@ -185,14 +186,16 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
 
     renderHackList(window, context, FeatureConfig.tabsData.values.toList())
 
-    if (tabKey.wasPressed())
-      tabViewActive = !tabViewActive
+    Composer.render(context)
 
-    if (!tabViewActive) return
+    //if (tabKey.wasPressed())
+    //  tabViewActive = !tabViewActive
+
+    // if (!tabViewActive) return
 
     updateMouse()
 
-    selectedGroup?.let {
+    /*selectedGroup?.let {
       renderFeatureSelection(context)
       
       return@render
@@ -236,6 +239,6 @@ object SagilithsPvEUtilsPrivateClient : ClientModInitializer {
 
       context.drawTexture(defaultTexture, x, y, 0f, 0f, size, size, size, size)
       context.drawText(textRenderer, featureName, x - textRenderer.getWidth(featureName) / 2 + size / 2, y + 35, 0xFFFFFFFF.toInt(), true)
-    }
+    }*/
   }
 }
