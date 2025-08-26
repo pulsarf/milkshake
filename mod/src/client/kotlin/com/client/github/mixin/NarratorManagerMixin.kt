@@ -9,5 +9,5 @@ import org.spongepowered.asm.mixin.Overwrite
 @Mixin(NarratorManager::class)
 abstract class NarratorManagerMixin {
   @Overwrite
-  fun checkNarratorLibrary(active: Boolean): Nothing = throw InactiveNarratorLibraryException("Narrator library disabled")
+  fun method_52183(active: Boolean): Nothing = throw InactiveNarratorLibraryException("Narrator library disabled")
 }
