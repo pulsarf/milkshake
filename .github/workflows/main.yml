@@ -24,7 +24,7 @@ jobs:
 
       - name: bzl build
         run: | 
-          cd /home/runner/work/milkshake && ls && \
+          cd /home/runner/work/milkshake/milkshake && ls && \
           bazel build @milkshake//mod --output_groups=default,executable
           
       - name: Upload build artifact
