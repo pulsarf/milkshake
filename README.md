@@ -11,7 +11,7 @@ Made in 2 weeks, because I had nothing useful to do
 <small> Broken clickgui </small>
 
 
-This repo is more of a showcase of my huge failure, and here are the reason why I'm not continuing this
+This repo is more of a showcase of my huge failure, and here are the reasons why I'm not continuing this
 
 
 - Bad ClickGUI components implementation. Each component knows about each other's existence
