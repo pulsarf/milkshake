@@ -11,7 +11,7 @@ object FullBright {
   val mod = Module(
     "Utility",
     "Full brightness",
-    true
+    false
   )
 
   val mc = MinecraftClient.getInstance()
@@ -33,3 +33,4 @@ object FullBright {
     }
   }
 }
+
