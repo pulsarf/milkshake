@@ -16,6 +16,7 @@ object Tick {
       FastPlace.tick()
       FreeCam.tick()
       FullBright.tick()
+      RefillOffhand.tick()
       ElytraTiming.tick()
       Zoom.tick()
       KillAura.tick()

@@ -22,6 +22,8 @@ import com.client.github.feature.elytra.ElytraFlight
 import com.client.github.utility.Toast
 import com.client.github.feature.elytra.modes.*
 
+import kotlin.math.min
+
 object PathUtils {
     private var pathLock: IMovement? = null
     private val mc = MinecraftClient.getInstance()
@@ -51,9 +53,10 @@ object PathUtils {
 
         val enemyPredictedMovement = target.getVelocity().multiply(time)
 
+        val yCoord = target.getHeight().toDouble()
         val end = endVec
             .add(enemyPredictedMovement)
-            .add(0.0, 3.0, 0.0)
+            .add(0.0, min(yCoord / 2, 4.0), 0.0)
 
         return end
     }
