@@ -48,12 +48,12 @@ object ElytraFlight {
     val actualMovementVec = Firework.getMovementVector() ?: return
 
     val fakeMovementVec = if (movementVec == null) {
-        actualMovementVec
+        Firework.getRawMovementVector() ?: return
     } else {
         movementVec
     }
 
-    if (Firework.mod.enabled()) Firework.tick(fakeMovementVec)
+    if (Firework.mod.enabled()) Firework.tickSafe(movementVec)
     if (Themis.mod.enabled()) return Themis.tick(fakeMovementVec)
     if (Bounce.mod.enabled()) return Bounce.tick(actualMovementVec)
     if (!(mc?.player?.isFallFlying() ?: false)) return

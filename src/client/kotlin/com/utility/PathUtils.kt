@@ -49,7 +49,7 @@ object PathUtils {
         val distance = startVec.distanceTo(endVec)
         val time = distance / UNITS_PER_BLOCK
 
-        val enemyPredictedMovement = target.getVelocity().multiply(time / 2)
+        val enemyPredictedMovement = target.getVelocity().multiply(time)
 
         val end = endVec
             .add(enemyPredictedMovement)
@@ -66,8 +66,6 @@ object PathUtils {
 
                 behaviour.cancelEverything()
 
-                Toast("Pathfinder", "Disabled acceleration flight", SystemToast.Type.TUTORIAL_HINT)
-
                 Accelerate.mod.disable()
                 Packet.mod.enable()
             }
@@ -75,11 +73,13 @@ object PathUtils {
             return end.subtract(start).normalize()
         }
 
-        if (Accelerate.mod.disabled()) {
-            Toast("Pathfinder", "Enabled acceleration flight", SystemToast.Type.TUTORIAL_HINT)
+        if (Firework.mod.disabled()) {
+            if (Accelerate.mod.disabled()) {
+                Toast("Pathfinder", "Enabled acceleration flight", SystemToast.Type.TUTORIAL_HINT)
 
-            Accelerate.mod.enable()
-            Packet.mod.disable()
+                Accelerate.mod.enable()
+                Packet.mod.disable()
+            }
         }
 
         val distance = end.distanceTo(start)

@@ -11,6 +11,7 @@ import net.minecraft.util.math.Vec3d
 
 import com.client.github.feature.Module
 import com.client.github.feature.elytra.ElytraFlight
+import com.client.github.feature.elytra.ElytraTiming
 import com.client.github.utility.Toast
 import com.client.github.feature.combat.KillAura
 import com.client.github.utility.PathUtils
@@ -54,18 +55,30 @@ object ElytraTarget : Module("Elytra", "Elytra target") {
 
         stateFreeze = false
 
-        mc!!.player!!.startFallFlying()
+        ElytraTiming.enter()
 
         val playerPos = mc!!.player!!.getBlockPos().toCenterPos()
         val targetPos = PathUtils.predictPathEndForElytra(mc!!.player!!, target)
 
         val path = PathUtils.findPath(playerPos, targetPos)
 
-        if ((!Accelerate.mod.enabled() && !Packet.mod.enabled()) || !ElytraFlight.mod.enabled() || !KillAura.mod.enabled()) {
+        if (Firework.mod.enabled()) {
+            if (Accelerate.mod.enabled() || Packet.mod.enabled()) {
+                Accelerate.mod.disable()
+                Packet.mod.disable()
+            }
+
+            if (!ElytraFlight.mod.enabled() || !KillAura.mod.enabled()) {
+                ElytraFlight.mod.enable()
+                Firework.mod.enable()
+                KillAura.mod.enable()
+            }
+        } else if ((!Accelerate.mod.enabled() && !Packet.mod.enabled()) || !ElytraFlight.mod.enabled() || !KillAura.mod.enabled()) {
             KillAura.mod.enable()
             ElytraFlight.mod.enable()
             Accelerate.mod.enable()
         }
+
 
         ElytraFlight.tick(path)
     }

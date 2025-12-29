@@ -9,9 +9,15 @@ import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket
 import com.client.github.feature.elytra.ElytraFlightMode
 
 object Firework : ElytraFlightMode("Firework") {
-    override fun tick(movementVector: Vec3d) {
-        adjustDirection(movementVector)
+    fun tickSafe(movementVector: Vec3d?) {
+        if (movementVector != null) {
+            adjustDirection(movementVector)
+        }
 
+        tick()
+    }
+
+    override fun tick(movementVector: Vec3d) {
         val player = mc.player ?: return
         val offhand = player.getInventory().getStack(PlayerInventory.OFF_HAND_SLOT)
         val item = offhand.getItem()
@@ -26,9 +32,7 @@ object Firework : ElytraFlightMode("Firework") {
                 PlayerInteractItemC2SPacket(Hand.OFF_HAND, 0)
             )
 
-            player.swingHand(Hand.OFF_HAND)
-
-            item.use(player.world, player, Hand.OFF_HAND)
+            //player.swingHand(Hand.OFF_HAND)
         }
     }
 

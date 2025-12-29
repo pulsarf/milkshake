@@ -12,9 +12,10 @@ abstract class ElytraFlightMode(val name: String) {
     val mc = MinecraftClient.getInstance()
 
     fun adjustDirection(movementVec: Vec3d) {
-        if (!mc.player!!.isFallFlying()) return
-
         val player = mc.player ?: return
+
+        if (!player.isFallFlying()) return
+
         val camera = mc?.gameRenderer?.getCamera() ?: return
 
         val yaw = atan2(movementVec.z, movementVec.x)

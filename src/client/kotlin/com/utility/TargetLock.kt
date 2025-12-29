@@ -25,7 +25,7 @@ object TargetLock {
                 entity: Entity ->
                     val health = if (entity is LivingEntity) (entity as LivingEntity).getHealth() else 0f
 
-                    playerPos.squaredDistanceTo(entity.getPos())
+                    playerPos.squaredDistanceTo(entity.getPos()) + health * 10
             }
 
             for (entity in sortedEntities) {
@@ -40,6 +40,8 @@ object TargetLock {
 
                 if (playerPos.y - entityPos.y > 2) continue
                 if (!PathUtils.canStraightflyFrom(playerPos, entityPos)) continue
+
+                Toast("Target", "Switch to ${entity?.getName()?.getString()}", SystemToast.Type.TUTORIAL_HINT)
 
                 return entity
             }
